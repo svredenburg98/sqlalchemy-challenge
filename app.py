@@ -37,7 +37,7 @@ def Home_Page():
     return (
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/passengers"
+        f"/api/v1.0/stations"
     )
 
 @app.route('/api/v1.0/precipitation')
@@ -64,32 +64,21 @@ def prcp():
     return jsonify(prcp_list)
 
 
-@app.route('/api/v1.0/passengers')
-def passengers():
+@app.route('/api/v1.0/stations')
+def stat():
 
     ############### Database Block ###################
     # Start session
     session = Session(engine)
 
     # Query the database
-    results = session.query(Passenger).all()
+    results_station = session.query(Station.station, Station.name).all()
 
     # close session
     session.close()
     ###################################################
 
-    ################### Processing ####################
-    all_passengers = []
-    for passenger in results:
-        passenger_dict = {}
-        passenger_dict['name'] = {'first':passenger.name.split(' ')[1],'last':passenger.name.split(' ')[0]}
-        passenger_dict['age'] = passenger.age
-        passenger_dict['doubleAge'] = double(passenger.age)
-        passenger_dict['sex'] = passenger.sex
-        all_passengers.append(passenger_dict)
-    ####################################################
-
-    return jsonify(all_passengers)
+    return jsonify(results_station)
 
 if __name__ == '__main__':
     app.run(debug=True)
