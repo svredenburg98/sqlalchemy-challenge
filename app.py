@@ -37,23 +37,23 @@ def Home_Page():
     return (
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/stations"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/tobs"
     )
 
 @app.route('/api/v1.0/precipitation')
 def prcp():
-    
+    ############### Database Block ###################
+    # Start session
     session = Session(engine)
+
+    # Query the database
     results = session.query(Measurement.date, Measurement.prcp).order_by(Measurement.date).all()
 
     # close the session to end communication with the server
     session.close()
-    #prcp_dict = {'date': 'prcp'}
-    #for row in results:
-    #    prcp_dict['date'] = row.date
-    #    prcp_dict['prcp'] = row.prcp
+    ###################################################
 
-    #return jsonify(prcp_dict)
     prcp_list = []
     for date in results:
         prcp_dict = {}
@@ -80,5 +80,25 @@ def stat():
 
     return jsonify(results_station)
 
+
+@app.route('/api/v1.0/tobs')
+def temp():
+
+    ############### Database Block ###################
+    # Start session
+    session = Session(engine)
+
+    # Query the database
+    tobs_results = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date > '2016-08-23').filter(Measurement.station == 'USC00519281').order_by(Measurement.date).all()
+
+
+    # close session
+    session.close()
+    ###################################################
+
+    return jsonify(tobs_results)
+
+
+   
 if __name__ == '__main__':
     app.run(debug=True)
