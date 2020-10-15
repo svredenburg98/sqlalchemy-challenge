@@ -4,7 +4,7 @@ import os
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 
 from flask import Flask, jsonify
 
@@ -98,7 +98,31 @@ def temp():
 
     return jsonify(tobs_results)
 
+@app.route('/api/v1.0/<start_date>')
+def start(start_date):
+    ############### Database Block ###################
+    # Start session
+    session = Session(engine)
 
+    # Query the database
+    #highest temp
+    high = session.query(Measurement.tobs).filter(Measurement.date > start_date).order_by(Measurement.tobs.desc()).first()
+    #lowest temp
+    low = session.query(Measurement.tobs).filter(Measurement.date > start_date).order_by(Measurement.tobs).first()
+    #avg temp
+    avg = session.query(func.avg(Measurement.tobs)).filter(Measurement.date > start_date).all()
+    
+    # close session
+    session.close()
+    ###################################################
+
+    return (
+        f"DATA SINCE {start_date}<br/>"
+        f"TMIN: {str(low)}<br/>"
+        f"TAVG: {str(avg)}<br/>"
+        f"TMAX: {str(high)}"
+    )
+    
    
 if __name__ == '__main__':
     app.run(debug=True)
