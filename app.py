@@ -35,10 +35,13 @@ app = Flask(__name__)
 def Home_Page():
     """List all available api routes."""
     return (
+        f"-------------------<br/>"
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/tobs"
+        f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/START_DATE<br/>"
+        f"/api/v1.0/START_DATE/ENDDATE"
     )
 
 @app.route('/api/v1.0/precipitation')
@@ -106,23 +109,36 @@ def start(start_date):
 
     # Query the database
     #highest temp
-    high = session.query(Measurement.tobs).filter(Measurement.date > start_date).order_by(Measurement.tobs.desc()).first()
+    high = session.query(Measurement.tobs).filter(Measurement.date >= start_date).order_by(Measurement.tobs.desc()).first()
     #lowest temp
-    low = session.query(Measurement.tobs).filter(Measurement.date > start_date).order_by(Measurement.tobs).first()
+    low = session.query(Measurement.tobs).filter(Measurement.date >= start_date).order_by(Measurement.tobs).first()
     #avg temp
-    avg = session.query(func.avg(Measurement.tobs)).filter(Measurement.date > start_date).all()
+    avg = session.query(func.avg(Measurement.tobs)).filter(Measurement.date >= start_date).all()
     
     # close session
     session.close()
     ###################################################
-
-    return (
-        f"DATA SINCE {start_date}<br/>"
-        f"TMIN: {str(low)}<br/>"
-        f"TAVG: {str(avg)}<br/>"
-        f"TMAX: {str(high)}"
-    )
+    infolist = [{"TMIN": low}, {"TAVG": avg}, {"TMAX": high}]
+    return jsonify(infolist)
     
-   
+@app.route('/api/v1.0/<start_date>/<end_date>')
+def startend(start_date, end_date):
+    ############### Database Block ###################
+    # Start session
+    session = Session(engine)
+
+    # Query the database
+    #highest temp
+    high_end = session.query(Measurement.tobs).filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).order_by(Measurement.tobs.desc()).first()
+    #lowest temp
+    low_end = session.query(Measurement.tobs).filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).order_by(Measurement.tobs).first()
+    #avg temp
+    avg_end = session.query(func.avg(Measurement.tobs)).filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
+    
+    # close session
+    session.close()
+    ###################################################
+    infolist_end = [{"TMIN": low_end}, {"TAVG": avg_end}, {"TMAX": high_end}]
+    return jsonify(infolist_end)
 if __name__ == '__main__':
     app.run(debug=True)
